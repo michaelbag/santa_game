@@ -243,6 +243,12 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     warning "Репозиторий уже существует в $INSTALL_DIR"
     read -p "Обновить существующий репозиторий? (y/n) [y]: " update_repo
     if [[ "$update_repo" =~ ^[Yy]$ ]] || [ -z "$update_repo" ]; then
+        # Исправляем права владения репозитория
+        chown -R "$SYSTEM_USER:$SYSTEM_USER" "$INSTALL_DIR"
+        
+        # Добавляем директорию в safe.directory для git (если нужно)
+        sudo -u "$SYSTEM_USER" bash -c "git config --global --add safe.directory $INSTALL_DIR 2>/dev/null || true"
+        
         # Проверяем и настраиваем remote, если нужно
         sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && \
             if ! git remote get-url origin &>/dev/null; then
@@ -260,6 +266,10 @@ elif [ "$(ls -A $INSTALL_DIR 2>/dev/null)" ]; then
     if [[ "$clean_dir" =~ ^[Yy]$ ]]; then
         rm -rf "$INSTALL_DIR"/*
         sudo -u "$SYSTEM_USER" git clone "$REPO_URL" "$INSTALL_DIR"
+        # Убеждаемся, что права владения установлены правильно
+        chown -R "$SYSTEM_USER:$SYSTEM_USER" "$INSTALL_DIR"
+        # Добавляем директорию в safe.directory для git
+        sudo -u "$SYSTEM_USER" bash -c "git config --global --add safe.directory $INSTALL_DIR 2>/dev/null || true"
         success "Репозиторий склонирован"
     else
         error "Установка прервана"
@@ -267,6 +277,10 @@ elif [ "$(ls -A $INSTALL_DIR 2>/dev/null)" ]; then
     fi
 else
     sudo -u "$SYSTEM_USER" git clone "$REPO_URL" "$INSTALL_DIR"
+    # Убеждаемся, что права владения установлены правильно
+    chown -R "$SYSTEM_USER:$SYSTEM_USER" "$INSTALL_DIR"
+    # Добавляем директорию в safe.directory для git
+    sudo -u "$SYSTEM_USER" bash -c "git config --global --add safe.directory $INSTALL_DIR 2>/dev/null || true"
     success "Репозиторий склонирован"
 fi
 
