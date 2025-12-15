@@ -184,10 +184,11 @@ info "Шаг 6: Создание системного пользователя"
 if id "$SYSTEM_USER" &>/dev/null; then
     warning "Пользователь $SYSTEM_USER уже существует"
     read -p "Использовать существующего пользователя? (y/n) [y]: " use_existing_user
-    if [[ ! "$use_existing_user" =~ ^[Yy]$ ]]; then
+    if [[ ! "$use_existing_user" =~ ^[Yy]$ ]] && [ -n "$use_existing_user" ]; then
         error "Установка прервана"
         exit 1
     fi
+    success "Используется существующий пользователь $SYSTEM_USER"
 else
     useradd -r -s /bin/bash -d "$INSTALL_DIR" "$SYSTEM_USER"
     success "Пользователь $SYSTEM_USER создан"
