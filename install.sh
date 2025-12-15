@@ -239,7 +239,15 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     warning "Репозиторий уже существует в $INSTALL_DIR"
     read -p "Обновить существующий репозиторий? (y/n) [y]: " update_repo
     if [[ "$update_repo" =~ ^[Yy]$ ]] || [ -z "$update_repo" ]; then
-        sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && git pull"
+        # Проверяем и настраиваем remote, если нужно
+        sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && \
+            if ! git remote get-url origin &>/dev/null; then
+                git remote add origin $REPO_URL
+            elif [ \"\$(git remote get-url origin)\" != \"$REPO_URL\" ]; then
+                git remote set-url origin $REPO_URL
+            fi && \
+            git fetch origin && \
+            git pull origin main"
         success "Репозиторий обновлен"
     fi
 elif [ "$(ls -A $INSTALL_DIR 2>/dev/null)" ]; then
@@ -483,6 +491,13 @@ info "Хранение данных:"
 echo "  База данных:       В PostgreSQL (если выбран) или SQLite файл"
 echo "  Картинки подарков:  Хранятся как file_id в базе данных"
 echo "                     (файлы находятся на серверах Telegram)"
+echo ""
+info "Обновление проекта:"
+echo "  Для обновления до последней версии выполните:"
+echo "    cd $INSTALL_DIR"
+echo "    sudo -u $SYSTEM_USER git fetch origin"
+echo "    sudo -u $SYSTEM_USER git pull origin main"
+echo "    sudo systemctl restart santa-game-bot.service"
 if [[ "$DB_ENGINE" == "postgresql" ]]; then
     echo ""
     info "База данных PostgreSQL:"

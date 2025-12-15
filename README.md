@@ -82,13 +82,15 @@ python manage.py createsuperuser
 Используйте интерактивный скрипт установки, который автоматически настроит все необходимое:
 
 ```bash
-# Клонируйте репозиторий
-git clone https://github.com/michaelbag/santa_game.git
-cd santa_game
+# Клонируйте репозиторий сразу в /opt/santa_game
+sudo git clone https://github.com/michaelbag/santa_game.git /opt/santa_game
+cd /opt/santa_game
 
 # Запустите скрипт установки с правами sudo
 sudo ./install.sh
 ```
+
+**Примечание:** Клонирование сразу в `/opt/santa_game` позволяет в дальнейшем обновлять проект через `git pull` без необходимости перемещения файлов.
 
 Скрипт интерактивно запросит:
 - Путь установки (по умолчанию: `/opt/santa_game`)
@@ -173,7 +175,8 @@ GRANT ALL PRIVILEGES ON DATABASE santa_game TO santa_game;
 # Переключаемся на пользователя santa_game
 sudo -u santa_game bash
 
-# Клонируем репозиторий
+# Клонируем репозиторий сразу в /opt/santa_game
+# Использование точки (.) клонирует репозиторий в текущую директорию
 cd /opt/santa_game
 git clone https://github.com/michaelbag/santa_game.git .
 
@@ -316,16 +319,19 @@ sudo journalctl -u santa-game-bot.service -n 100
 
 ### Обновление проекта
 
+Для обновления проекта до последней версии:
+
 ```bash
 # Переключаемся на пользователя santa_game
 sudo -u santa_game bash
 
 cd /opt/santa_game
 
-# Останавливаем бота (из другой сессии)
+# Останавливаем бота (из другой сессии или в новом терминале)
 # sudo systemctl stop santa-game-bot.service
 
-# Обновляем код
+# Обновляем код из репозитория
+git fetch origin
 git pull origin main
 
 # Активируем виртуальную среду
@@ -340,9 +346,13 @@ python manage.py migrate
 # Выходим из сессии
 exit
 
-# Запускаем бота
-sudo systemctl start santa-game-bot.service
+# Перезапускаем сервисы
+sudo systemctl restart santa-game-bot.service
+# Если используется Django Admin:
+# sudo systemctl restart santa-game-admin.service
 ```
+
+**Примечание:** Благодаря тому, что репозиторий был клонирован сразу в `/opt/santa_game`, обновление выполняется простой командой `git pull`.
 
 ### Проверка работы
 
