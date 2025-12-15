@@ -206,9 +206,11 @@ if [[ "$DB_ENGINE" == "postgresql" ]]; then
     if sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB_USER'" | grep -q 1; then
         warning "Пользователь PostgreSQL $DB_USER уже существует"
         read -p "Изменить пароль? (y/n) [y]: " change_password
-        if [[ "$change_password" =~ ^[Yy]$ ]]; then
+        if [[ "$change_password" =~ ^[Yy]$ ]] || [ -z "$change_password" ]; then
             sudo -u postgres psql -c "ALTER USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
             success "Пароль обновлен"
+        else
+            info "Пароль не изменен"
         fi
     else
         sudo -u postgres psql -c "CREATE USER $DB_USER WITH PASSWORD '$DB_PASSWORD';"
@@ -219,10 +221,11 @@ if [[ "$DB_ENGINE" == "postgresql" ]]; then
     if sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
         warning "База данных $DB_NAME уже существует"
         read -p "Использовать существующую базу? (y/n) [y]: " use_existing_db
-        if [[ ! "$use_existing_db" =~ ^[Yy]$ ]]; then
+        if [[ ! "$use_existing_db" =~ ^[Yy]$ ]] && [ -n "$use_existing_db" ]; then
             error "Установка прервана"
             exit 1
         fi
+        success "Используется существующая база данных $DB_NAME"
     else
         sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;"
         success "База данных $DB_NAME создана"
