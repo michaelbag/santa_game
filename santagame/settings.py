@@ -17,6 +17,7 @@ E-mail: mk@remark.pro
 """
 
 from pathlib import Path
+import os
 from dotenv import load_dotenv
 
 # Загружаем переменные окружения из .env файла (если существует)
@@ -156,7 +157,6 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 # Telegram Bot Settings
-import os
 TELEGRAM_BOT_TOKEN = os.getenv(
     "TELEGRAM_BOT_TOKEN", ""
 )  # Установите токен бота в переменной окружения
