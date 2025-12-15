@@ -10,13 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 
 Проект: Игра "Тайный Санта" - Telegram Бот
-Версия: 1.0
+Версия: 1.1
 Автор: Michael BAG
 Telegram: @michaelbag
 E-mail: mk@remark.pro
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Загружаем переменные окружения из .env файла (если существует)
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,7 +35,13 @@ SECRET_KEY = "django-insecure-&si+j=u82xbz=v6l9!$=xj5*-s72dyxd5$@j^0-1hj!f27)@=i
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Для продакшена установите DEBUG = False
+# Для работы за Nginx reverse proxy добавьте ваш домен:
+# ALLOWED_HOSTS = ['example.com', 'www.example.com', 'localhost', '127.0.0.1']
 ALLOWED_HOSTS = []
+
+# Для работы за HTTPS прокси (Nginx) раскомментируйте:
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -79,12 +89,34 @@ WSGI_APPLICATION = "santagame.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+# Поддержка PostgreSQL через переменные окружения
+# Если указаны переменные для PostgreSQL, используем его, иначе SQLite
+DB_ENGINE = os.getenv("DB_ENGINE", "sqlite3")
+DB_NAME = os.getenv("DB_NAME", "")
+DB_USER = os.getenv("DB_USER", "")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+
+if DB_ENGINE == "postgresql" and DB_NAME:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": DB_NAME,
+            "USER": DB_USER,
+            "PASSWORD": DB_PASSWORD,
+            "HOST": DB_HOST,
+            "PORT": DB_PORT,
+        }
     }
-}
+else:
+    # По умолчанию используем SQLite
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation

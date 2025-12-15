@@ -1,0 +1,20 @@
+[Unit]
+Description=Santa Game Telegram Bot
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=santa_game
+Group=santa_game
+WorkingDirectory=/opt/santa_game
+Environment="PATH=/opt/santa_game/venv/bin"
+ExecStart=/opt/santa_game/venv/bin/python /opt/santa_game/manage.py runbot
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+

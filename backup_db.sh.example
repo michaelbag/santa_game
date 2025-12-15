@@ -1,0 +1,20 @@
+#!/bin/bash
+# Скрипт резервного копирования базы данных PostgreSQL
+# Использование: ./backup_db.sh
+# Требует права sudo для доступа к PostgreSQL
+
+BACKUP_DIR="/opt/santa_game/backups"
+mkdir -p $BACKUP_DIR
+DATE=$(date +%Y%m%d_%H%M%S)
+
+# Создаем резервную копию базы данных
+sudo -u postgres pg_dump santa_game > $BACKUP_DIR/santa_game_$DATE.sql
+
+# Сжимаем резервную копию
+gzip $BACKUP_DIR/santa_game_$DATE.sql
+
+# Удаляем резервные копии старше 7 дней
+find $BACKUP_DIR -name "santa_game_*.sql.gz" -mtime +7 -delete
+
+echo "Резервная копия создана: $BACKUP_DIR/santa_game_$DATE.sql.gz"
+
