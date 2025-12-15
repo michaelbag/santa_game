@@ -1,0 +1,24 @@
+# Правила проекта Santa Game
+
+## Виртуальная среда Python
+
+**ВАЖНО:** Все Python скрипты должны запускаться из активированной виртуальной среды.
+
+Виртуальная среда находится в директории `venv/`.
+
+### Активация виртуальной среды:
+- macOS/Linux: `source venv/bin/activate`
+- Windows: `venv\Scripts\activate`
+
+### Запуск скриптов:
+Всегда активируйте виртуальную среду перед запуском Python скриптов:
+```bash
+source venv/bin/activate
+python script.py
+```
+
+Или используйте прямой путь к Python из виртуальной среды:
+```bash
+venv/bin/python script.py
+```
+
