@@ -26,6 +26,6 @@ Thumbs.db
 .env
 .env.local
 
-# Database (опционально, можно закомментировать для разработки)
-# db.sqlite3
+# Database
+db.sqlite3
 
