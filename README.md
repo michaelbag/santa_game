@@ -699,10 +699,16 @@ sudo journalctl -u santa-game-admin.service -f
 
 При `DEBUG=False` Django не обслуживает статические файлы автоматически. Необходимо:
 
-1. **Собрать статические файлы:**
+1. **Обновить код из репозитория (если еще не обновлен):**
    ```bash
    sudo -u santa_game bash
    cd /opt/santa_game
+   git fetch origin
+   git pull origin main
+   ```
+
+2. **Собрать статические файлы:**
+   ```bash
    source venv/bin/activate
    python manage.py collectstatic --noinput
    exit
