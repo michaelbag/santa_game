@@ -60,7 +60,34 @@ server {
     # Максимальный размер загружаемых файлов
     client_max_body_size 10M;
 
-    # Проксирование на Django Admin
+    # ВАЖНО: Блоки для статических и медиа файлов должны быть ПЕРЕД общим location /
+    # Nginx проверяет location в порядке их появления, поэтому статические файлы
+    # будут обслуживаться напрямую, а не проксироваться на Django
+
+    # Статические файлы Django (CSS, JavaScript, изображения админки)
+    # Обслуживаются напрямую Nginx без проксирования на Django
+    location /static/ {
+        alias /opt/santa_game/staticfiles/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;  # Отключаем логирование для статических файлов (опционально)
+        
+        # Проверка существования файла перед отдачей
+        try_files $uri =404;
+    }
+
+    # Медиа файлы Django (если используются для загрузки пользовательских файлов)
+    location /media/ {
+        alias /opt/santa_game/media/;
+        expires 30d;
+        add_header Cache-Control "public";
+        access_log off;  # Отключаем логирование для медиа файлов (опционально)
+        
+        # Проверка существования файла перед отдачей
+        try_files $uri =404;
+    }
+
+    # Проксирование на Django Admin для всех остальных запросов
     # ВАЖНО: Замените 8000 на порт, указанный при установке Django Admin сервиса
     location / {
         proxy_pass http://127.0.0.1:8000;
@@ -80,20 +107,6 @@ server {
         proxy_buffer_size 4k;
         proxy_buffers 8 4k;
         proxy_busy_buffers_size 8k;
-    }
-
-    # Статические файлы Django (если используются)
-    location /static/ {
-        alias /opt/santa_game/staticfiles/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-
-    # Медиа файлы Django (если используются)
-    location /media/ {
-        alias /opt/santa_game/media/;
-        expires 30d;
-        add_header Cache-Control "public";
     }
 
     # Запрет доступа к скрытым файлам

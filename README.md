@@ -715,14 +715,31 @@ sudo journalctl -u santa-game-admin.service -f
    ```
 
 2. **Убедитесь, что Nginx настроен для обслуживания статических файлов:**
-   В конфигурации Nginx должен быть блок:
+   
+   **ВАЖНО:** Блок `location /static/` должен быть ПЕРЕД блоком `location /` в конфигурации Nginx!
+   
+   В конфигурации Nginx должен быть блок (перед общим `location /`):
    ```nginx
+   # Статические файлы Django (CSS, JavaScript, изображения админки)
    location /static/ {
        alias /opt/santa_game/staticfiles/;
        expires 30d;
        add_header Cache-Control "public, immutable";
+       access_log off;  # Отключаем логирование (опционально)
+       try_files $uri =404;
+   }
+   
+   # Проксирование на Django для всех остальных запросов
+   location / {
+       proxy_pass http://127.0.0.1:8000;
+       # ... остальные настройки прокси
    }
    ```
+   
+   **Почему порядок важен:**
+   - Nginx проверяет `location` блоки в порядке их появления
+   - Если `location /static/` идет после `location /`, то запросы к `/static/` будут проксироваться на Django
+   - Когда `location /static/` идет первым, Nginx сначала проверяет его и обслуживает статические файлы напрямую
 
 3. **Проверьте права доступа:**
    ```bash
