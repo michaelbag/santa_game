@@ -899,6 +899,7 @@ santa_game/
 ├── santa-game-bot.service.example  # Пример systemd сервиса
 ├── nginx-santa-game-admin.conf.example  # Пример конфигурации Nginx (один сервер)
 ├── nginx-santa-game-admin-external.conf.example  # Пример конфигурации Nginx (внешний сервер)
+├── SYNOLOGY_REVERSE_PROXY.md      # Инструкция по настройке на Synology DSM
 ├── backup_db.sh.example           # Пример скрипта резервного копирования
 └── README.md
 ```
