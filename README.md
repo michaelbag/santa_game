@@ -659,9 +659,25 @@ sudo journalctl -u santa-game-admin.service -f
 
 #### Настройка Nginx
 
+**Выберите подходящий вариант:**
+
+##### Вариант 1: Nginx и Django на одном сервере
+
+Если Nginx и Django Admin работают на одном сервере:
+
 1. **Скопируйте пример конфигурации:**
    ```bash
    sudo cp /opt/santa_game/nginx-santa-game-admin.conf.example /etc/nginx/sites-available/santa-game-admin
+   ```
+
+##### Вариант 2: Nginx на внешнем сервере, Django на внутреннем сервере
+
+Если Nginx работает на внешнем сервере (с белым IP), а Django на внутреннем сервере в локальной сети:
+
+1. **Скопируйте пример конфигурации для внешнего сервера:**
+   ```bash
+   # На ВНЕШНЕМ сервере (с белым IP)
+   sudo cp /path/to/santa_game/nginx-santa-game-admin-external.conf.example /etc/nginx/sites-available/santa-game-admin
    ```
 
 2. **Отредактируйте конфигурацию:**
@@ -695,7 +711,51 @@ sudo journalctl -u santa-game-admin.service -f
 - **SSL сертификаты:** Обновите пути к сертификатам, если используете другой источник
 - **Статические файлы:** Обязательно настройте обслуживание статических файлов через Nginx (см. ниже)
 
-#### Настройка статических файлов
+#### Настройка статических файлов для внешнего Nginx сервера
+
+Если Nginx работает на внешнем сервере, а Django на внутреннем, есть два варианта:
+
+**Вариант A: Проксирование статических файлов на внутренний сервер (рекомендуется для начала)**
+
+В конфигурации Nginx на внешнем сервере используйте блок из `nginx-santa-game-admin-external.conf.example`:
+```nginx
+location /static/ {
+    proxy_pass http://192.168.1.100:8000;  # Внутренний IP сервера с Django
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    
+    expires 30d;
+    add_header Cache-Control "public, immutable";
+    access_log off;
+}
+```
+
+**Вариант B: Обслуживание статических файлов напрямую на внешнем сервере (более производительно)**
+
+Если статические файлы доступны на внешнем сервере (через NFS, rsync или другой способ):
+
+1. **Скопируйте статические файлы на внешний сервер:**
+   ```bash
+   # На внутреннем сервере
+   rsync -avz /opt/santa_game/staticfiles/ user@external-server:/opt/santa_game_static/
+   
+   # Или используйте NFS, если настроен
+   ```
+
+2. **В конфигурации Nginx на внешнем сервере:**
+   ```nginx
+   location /static/ {
+       alias /opt/santa_game_static/;
+       expires 30d;
+       add_header Cache-Control "public, immutable";
+       access_log off;
+       try_files $uri =404;
+   }
+   ```
+
+#### Настройка статических файлов (общий случай)
 
 При `DEBUG=False` Django не обслуживает статические файлы автоматически. Необходимо:
 
@@ -815,7 +875,8 @@ santa_game/
 ├── .env.example                   # Пример файла переменных окружения
 ├── install.sh                     # Скрипт автоматической установки
 ├── santa-game-bot.service.example  # Пример systemd сервиса
-├── nginx-santa-game-admin.conf.example  # Пример конфигурации Nginx
+├── nginx-santa-game-admin.conf.example  # Пример конфигурации Nginx (один сервер)
+├── nginx-santa-game-admin-external.conf.example  # Пример конфигурации Nginx (внешний сервер)
 ├── backup_db.sh.example           # Пример скрипта резервного копирования
 └── README.md
 ```
