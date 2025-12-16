@@ -6,7 +6,7 @@ def index(request):
     """Главная страница с информацией о проекте и ссылкой на админку"""
     context = {
         'project_name': 'Игра "Тайный Санта"',
-        'version': '1.1',
+        'version': '1.2',
         'author': 'Michael BAG',
         'author_telegram': '@michaelbag',
         'author_email': 'mk@remark.pro',
