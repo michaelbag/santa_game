@@ -317,6 +317,40 @@ sudo journalctl -u santa-game-bot.service -f
 sudo journalctl -u santa-game-bot.service -n 100
 ```
 
+### Управление DEBUG режимом Django
+
+Для управления DEBUG режимом в Django админке используйте команду `toggle_debug`:
+
+```bash
+# Переключиться на пользователя santa_game
+sudo -u santa_game bash
+
+cd /opt/santa_game
+source venv/bin/activate
+
+# Показать текущий статус DEBUG режима
+python manage.py toggle_debug --status
+
+# Включить DEBUG режим
+python manage.py toggle_debug --on
+
+# Отключить DEBUG режим (рекомендуется для продакшена)
+python manage.py toggle_debug --off
+
+# Переключить DEBUG режим (включить, если выключен, и наоборот)
+python manage.py toggle_debug
+
+# Выходим из сессии
+exit
+```
+
+**Важно:** 
+- DEBUG режим должен быть **отключен** (`DEBUG = False`) в продакшене для безопасности
+- После изменения DEBUG режима перезапустите сервис Django Admin:
+  ```bash
+  sudo systemctl restart santa-game-admin.service
+  ```
+
 ### Обновление проекта
 
 Для обновления проекта до последней версии:
