@@ -410,7 +410,7 @@ async def leave_group(update: Update, context: ContextTypes.DEFAULT_TYPE):
         group = participation.group
         
         # Нельзя выйти, если ты владелец
-        if group.owner == telegram_user:
+        if group.owner_id == telegram_user.id:
             hints = get_command_hints("/draw", "/close_group", "/my_groups", "/help")
             await update.message.reply_text("❌ Вы не можете выйти из группы, которой владеете. Сначала проведите розыгрыш." + hints)
             return
@@ -447,7 +447,7 @@ async def my_groups(update: Update, context: ContextTypes.DEFAULT_TYPE):
     participations = await sync_to_async(list)(Participant.objects.filter(user=telegram_user).select_related('group', 'group__owner'))
     participant_groups = []
     for p in participations:
-        if p.group.owner != telegram_user:
+        if p.group.owner_id != telegram_user.id:
             participant_groups.append(p.group)
     
     if not owned_groups and not participant_groups:
@@ -991,9 +991,10 @@ async def get_invite(update: Update, context: ContextTypes.DEFAULT_TYPE):
             Participant.objects.filter(
                 user=telegram_user,
                 group__status='active'
-            ).select_related('group')
+            ).select_related('group', 'group__owner')
         )
-        participant_groups = [p.group for p in participations if p.group.owner != telegram_user]
+        # Используем owner_id вместо owner для избежания дополнительных запросов к БД
+        participant_groups = [p.group for p in participations if p.group.owner_id != telegram_user.id]
         
         all_groups = owned_groups + participant_groups
         
@@ -1306,7 +1307,7 @@ async def close_group_message(update: Update, context: ContextTypes.DEFAULT_TYPE
         return ConversationHandler.END
     
     # Проверяем, что пользователь все еще владелец
-    if group.owner.telegram_id != update.effective_user.id:
+    if group.owner_id != update.effective_user.id:
         await update.message.reply_text("❌ Вы не являетесь владельцем этой группы.")
         context.user_data.clear()
         return ConversationHandler.END
@@ -1389,7 +1390,7 @@ async def delete_group_start(update: Update, context: ContextTypes.DEFAULT_TYPE)
             group__status='closed'
         ).select_related('group', 'group__owner')
     )
-    participant_closed_groups = [p.group for p in participations if p.group.owner.telegram_id != telegram_user.telegram_id]
+    participant_closed_groups = [p.group for p in participations if p.group.owner_id != telegram_user.id]
     
     all_closed_groups = owned_closed_groups + participant_closed_groups
     
@@ -1448,7 +1449,7 @@ async def delete_group_selection(update: Update, context: ContextTypes.DEFAULT_T
             try:
                 group = await sync_to_async(Group.objects.select_related('owner').get)(id=group_data['id'])
                 # Проверяем, что пользователь является владельцем или участником
-                if group.owner.telegram_id == update.effective_user.id:
+                if group.owner_id == update.effective_user.id:
                     # Если владелец - удаляем группу полностью
                     await sync_to_async(group.delete)()
                     deleted_count += 1
@@ -1497,7 +1498,7 @@ async def delete_group_selection(update: Update, context: ContextTypes.DEFAULT_T
         group = await sync_to_async(Group.objects.select_related('owner').get)(id=selected_group_data['id'])
         
         # Проверяем, что пользователь является владельцем или участником
-        if group.owner.telegram_id == update.effective_user.id:
+        if group.owner_id == update.effective_user.id:
             # Если владелец - удаляем группу полностью
             group_name = group.name
             await sync_to_async(group.delete)()
