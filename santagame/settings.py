@@ -41,6 +41,11 @@ DEBUG = True
 # ALLOWED_HOSTS = ['example.com', 'www.example.com', 'localhost', '127.0.0.1']
 ALLOWED_HOSTS = []
 
+# CSRF настройки для работы за прокси
+# Для HTTPS через Nginx добавьте ваши домены:
+# CSRF_TRUSTED_ORIGINS = ['https://example.com', 'https://www.example.com']
+CSRF_TRUSTED_ORIGINS = []
+
 # Для работы за HTTPS прокси (Nginx) раскомментируйте:
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 

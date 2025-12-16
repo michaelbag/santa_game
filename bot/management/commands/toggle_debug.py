@@ -102,6 +102,41 @@ class Command(BaseCommand):
                 )
                 return
         
+        # Если отключаем DEBUG, нужно также настроить CSRF_TRUSTED_ORIGINS
+        if not new_debug:
+            # Проверяем наличие CSRF_TRUSTED_ORIGINS
+            csrf_match = re.search(r'^CSRF_TRUSTED_ORIGINS\s*=', new_content, re.MULTILINE)
+            if not csrf_match:
+                # Ищем ALLOWED_HOSTS для определения доменов
+                allowed_hosts_match = re.search(r"^ALLOWED_HOSTS\s*=\s*\[(.*?)\]", new_content, re.MULTILINE | re.DOTALL)
+                if allowed_hosts_match:
+                    hosts_str = allowed_hosts_match.group(1)
+                    # Извлекаем домены из ALLOWED_HOSTS
+                    hosts = re.findall(r"['\"]([^'\"]+)['\"]", hosts_str)
+                    # Формируем CSRF_TRUSTED_ORIGINS на основе ALLOWED_HOSTS
+                    csrf_origins = []
+                    for host in hosts:
+                        if host not in ['localhost', '127.0.0.1']:
+                            # Добавляем HTTPS версии для продакшена
+                            csrf_origins.append(f"https://{host}")
+                            if not host.startswith('www.'):
+                                csrf_origins.append(f"https://www.{host}")
+                    # Добавляем также HTTP для localhost
+                    csrf_origins.extend(['http://localhost:8000', 'http://127.0.0.1:8000'])
+                    
+                    if csrf_origins:
+                        csrf_line = f"CSRF_TRUSTED_ORIGINS = {csrf_origins}\n"
+                        # Вставляем после ALLOWED_HOSTS
+                        insert_pos = allowed_hosts_match.end()
+                        new_content = (
+                            new_content[:insert_pos] +
+                            '\n' + csrf_line +
+                            new_content[insert_pos:]
+                        )
+                        self.stdout.write(
+                            self.style.SUCCESS(f'CSRF_TRUSTED_ORIGINS настроен: {csrf_origins}')
+                        )
+        
         # Записываем обратно
         with open(settings_file, 'w', encoding='utf-8') as f:
             f.write(new_content)
@@ -116,6 +151,16 @@ class Command(BaseCommand):
                 self.style.WARNING(
                     '⚠️  ВНИМАНИЕ: DEBUG режим включен. '
                     'Не используйте в продакшене!'
+                )
+            )
+        else:
+            self.stdout.write(
+                self.style.WARNING(
+                    '⚠️  ВАЖНО: После отключения DEBUG убедитесь, что:\n'
+                    '  1. ALLOWED_HOSTS содержит ваш домен\n'
+                    '  2. CSRF_TRUSTED_ORIGINS настроен для вашего домена\n'
+                    '  3. SECURE_PROXY_SSL_HEADER настроен, если используете HTTPS через Nginx\n'
+                    '  4. Перезапустите сервис Django Admin'
                 )
             )
 

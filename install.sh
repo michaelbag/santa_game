@@ -356,6 +356,19 @@ if [ -f "$INSTALL_DIR/santagame/settings.py" ]; then
     sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && \
         sed -i \"s/^ALLOWED_HOSTS = .*/ALLOWED_HOSTS = $ALLOWED_HOSTS_STR/\" santagame/settings.py"
     success "ALLOWED_HOSTS обновлен в settings.py: $ALLOWED_HOSTS_STR"
+    
+    # Настраиваем CSRF_TRUSTED_ORIGINS для работы без DEBUG
+    if [[ "$ADMIN_DOMAIN" != "localhost" ]] && [[ "$ADMIN_DOMAIN" != "127.0.0.1" ]]; then
+        CSRF_ORIGINS_STR="['https://$ADMIN_DOMAIN', 'https://www.$ADMIN_DOMAIN', 'http://localhost:8000', 'http://127.0.0.1:8000']"
+        sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && \
+            sed -i \"s/^CSRF_TRUSTED_ORIGINS = .*/CSRF_TRUSTED_ORIGINS = $CSRF_ORIGINS_STR/\" santagame/settings.py"
+        success "CSRF_TRUSTED_ORIGINS обновлен в settings.py: $CSRF_ORIGINS_STR"
+    else
+        CSRF_ORIGINS_STR="['http://localhost:8000', 'http://127.0.0.1:8000']"
+        sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && \
+            sed -i \"s/^CSRF_TRUSTED_ORIGINS = .*/CSRF_TRUSTED_ORIGINS = $CSRF_ORIGINS_STR/\" santagame/settings.py"
+        success "CSRF_TRUSTED_ORIGINS обновлен в settings.py: $CSRF_ORIGINS_STR"
+    fi
 fi
 
 # Шаг 13: Применение миграций
