@@ -350,6 +350,11 @@ exit
   ```bash
   sudo systemctl restart santa-game-admin.service
   ```
+- При отключении DEBUG команда автоматически настраивает `CSRF_TRUSTED_ORIGINS` на основе `ALLOWED_HOSTS`
+- Если используете HTTPS через Nginx, убедитесь, что в `settings.py` настроен:
+  ```python
+  SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+  ```
 
 ### Обновление проекта
 
@@ -691,9 +696,14 @@ sudo journalctl -u santa-game-admin.service -f
 # Для работы за Nginx reverse proxy
 ALLOWED_HOSTS = ['example.com', 'www.example.com', 'localhost', '127.0.0.1']
 
+# CSRF настройки для работы за прокси (обязательно при DEBUG=False)
+CSRF_TRUSTED_ORIGINS = ['https://example.com', 'https://www.example.com', 'http://localhost:8000', 'http://127.0.0.1:8000']
+
 # Если используете HTTPS через Nginx
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ```
+
+**Примечание:** При использовании команды `toggle_debug --off` настройки `CSRF_TRUSTED_ORIGINS` настраиваются автоматически на основе `ALLOWED_HOSTS`.
 
 **Примечание:** Эти настройки уже добавлены в `settings.py` в виде комментариев. Раскомментируйте их при необходимости.
 
