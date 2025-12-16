@@ -350,9 +350,9 @@ async def join_group_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return ConversationHandler.END
     
     if not await sync_to_async(group.can_add_participants)():
-        status = await sync_to_async(lambda: group.get_status_display)()
+        status_display = await sync_to_async(lambda: group.get_status_display())()
         hints = get_command_hints("/my_groups", "/create_group", "/help")
-        await update.message.reply_text(f"❌ Эта группа уже не принимает участников. Статус: {group.status}" + hints)
+        await update.message.reply_text(f"❌ Эта группа уже не принимает участников. Статус: {status_display}" + hints)
         return ConversationHandler.END
     
     # Проверяем, не является ли пользователь уже участником
@@ -1098,8 +1098,9 @@ async def handle_forwarded_message(update: Update, context: ContextTypes.DEFAULT
     
     # Проверяем, можно ли добавить участников
     if not await sync_to_async(group.can_add_participants)():
+        status_display = await sync_to_async(lambda: group.get_status_display())()
         await update.message.reply_text(
-            f"❌ Группа '{group.name}' уже не принимает участников. Статус: {group.get_status_display()}"
+            f"❌ Группа '{group.name}' уже не принимает участников. Статус: {status_display}"
         )
         return
     
