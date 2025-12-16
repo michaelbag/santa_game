@@ -967,6 +967,9 @@ def generate_invite_message(group: Group) -> str:
 
 async def get_invite(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Получить пригласительное сообщение для группы"""
+    if not update.message:
+        return
+    
     user = update.effective_user
     
     try:
@@ -974,45 +977,49 @@ async def get_invite(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except TelegramUser.DoesNotExist:
         await update.message.reply_text("❌ Вы не зарегистрированы в системе. Используйте /start")
         return
+    except Exception as e:
+        print(f"Ошибка при получении пользователя в get_invite: {e}")
+        await update.message.reply_text("❌ Произошла ошибка. Попробуйте позже.")
+        return
     
-    # Получаем активные группы пользователя (где он владелец или участник)
-    owned_groups = await sync_to_async(list)(
-        Group.objects.filter(owner=telegram_user, status='active')
-    )
-    participations = await sync_to_async(list)(
-        Participant.objects.filter(
-            user=telegram_user,
-            group__status='active'
-        ).select_related('group')
-    )
-    participant_groups = [p.group for p in participations if p.group.owner != telegram_user]
-    
-    all_groups = owned_groups + participant_groups
-    
-    if not all_groups:
-        hints = get_command_hints("/create_group", "/join_group", "/help")
-        await update.message.reply_text(
-            "❌ У вас нет активных групп. Создайте группу командой /create_group" + hints
+    try:
+        # Получаем активные группы пользователя (где он владелец или участник)
+        owned_groups = await sync_to_async(list)(
+            Group.objects.filter(owner=telegram_user, status='active')
         )
-        return
-    
-    if len(all_groups) == 1:
-        # Если одна группа, отправляем приглашение сразу
-        group = all_groups[0]
-        invite_message = generate_invite_message(group)
-        await update.message.reply_text(invite_message, parse_mode='HTML')
-        return
-    
-    # Если несколько групп, нужно выбрать
-    groups_list = "\n".join([f"{i+1}. {g.name} ({g.code})" for i, g in enumerate(all_groups)])
-    await update.message.reply_text(
-        f"📋 Выберите группу для приглашения:\n\n{groups_list}\n\n"
-        "Введите номер группы:"
-    )
-    # Упрощенная версия - отправляем для первой группы
-    group = all_groups[0]
-    invite_message = generate_invite_message(group)
-    await update.message.reply_text(invite_message, parse_mode='HTML')
+        participations = await sync_to_async(list)(
+            Participant.objects.filter(
+                user=telegram_user,
+                group__status='active'
+            ).select_related('group')
+        )
+        participant_groups = [p.group for p in participations if p.group.owner != telegram_user]
+        
+        all_groups = owned_groups + participant_groups
+        
+        if not all_groups:
+            hints = get_command_hints("/create_group", "/join_group", "/help")
+            await update.message.reply_text(
+                "❌ У вас нет активных групп. Создайте группу командой /create_group" + hints
+            )
+            return
+        
+        if len(all_groups) == 1:
+            # Если одна группа, отправляем приглашение сразу
+            group = all_groups[0]
+            invite_message = generate_invite_message(group)
+            await update.message.reply_text(invite_message, parse_mode='HTML')
+            return
+        
+        # Если несколько групп, отправляем приглашения для всех
+        for group in all_groups:
+            invite_message = generate_invite_message(group)
+            await update.message.reply_text(invite_message, parse_mode='HTML')
+    except Exception as e:
+        print(f"Ошибка в get_invite: {e}")
+        import traceback
+        traceback.print_exc()
+        await update.message.reply_text("❌ Произошла ошибка при получении приглашения. Попробуйте позже.")
 
 
 async def handle_unknown_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
