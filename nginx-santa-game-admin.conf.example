@@ -11,7 +11,7 @@
 # 5. Перезагрузите nginx: sudo systemctl reload nginx
 #
 # Автор: Michael BAG
-# Версия: 1.1
+# Версия: 1.2
 
 # Редирект с HTTP на HTTPS
 server {

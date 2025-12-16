@@ -2,7 +2,7 @@
 
 # Скрипт установки Santa Game на Ubuntu Server 24.04
 # Автор: Michael BAG
-# Версия: 1.1
+# Версия: 1.2
 #
 # Использование:
 #   sudo ./install.sh

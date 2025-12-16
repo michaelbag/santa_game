@@ -1,6 +1,6 @@
 # 🎄 Игра "Тайный Санта" - Telegram Бот
 
-**Версия:** 1.1  
+**Версия:** 1.2  
 **Автор:** Michael BAG  
 **Telegram:** [@michaelbag](https://t.me/michaelbag)  
 **E-mail:** mk@remark.pro

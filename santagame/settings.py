@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 
 Проект: Игра "Тайный Санта" - Telegram Бот
-Версия: 1.1
+Версия: 1.2
 Автор: Michael BAG
 Telegram: @michaelbag
 E-mail: mk@remark.pro
