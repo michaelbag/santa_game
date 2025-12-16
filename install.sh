@@ -306,9 +306,16 @@ info "Шаг 10: Установка зависимостей Python"
 sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt"
 success "Зависимости установлены"
 
-# Шаг 11: Создание файла .env
+# Шаг 11: Запрос домена для Django админки
 echo ""
-info "Шаг 11: Создание файла конфигурации .env"
+info "Шаг 11: Настройка домена для Django админки"
+read -p "Имя домена для Django админки (например: example.com) [localhost]: " ADMIN_DOMAIN
+ADMIN_DOMAIN=${ADMIN_DOMAIN:-localhost}
+info "Используется домен: $ADMIN_DOMAIN"
+
+# Шаг 12: Создание файла .env
+echo ""
+info "Шаг 12: Создание файла конфигурации .env"
 cat > "$INSTALL_DIR/.env" << EOF
 # Telegram Bot Token
 TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN
@@ -336,22 +343,37 @@ chown "$SYSTEM_USER:$SYSTEM_USER" "$INSTALL_DIR/.env"
 chmod 600 "$INSTALL_DIR/.env"
 success "Файл .env создан"
 
-# Шаг 12: Применение миграций
+# Обновление ALLOWED_HOSTS в settings.py
+if [ -f "$INSTALL_DIR/santagame/settings.py" ]; then
+    # Формируем список доменов для ALLOWED_HOSTS
+    if [[ "$ADMIN_DOMAIN" == "localhost" ]] || [[ "$ADMIN_DOMAIN" == "127.0.0.1" ]]; then
+        ALLOWED_HOSTS_STR="['$ADMIN_DOMAIN', '127.0.0.1']"
+    else
+        ALLOWED_HOSTS_STR="['$ADMIN_DOMAIN', 'www.$ADMIN_DOMAIN', 'localhost', '127.0.0.1']"
+    fi
+    
+    # Обновляем ALLOWED_HOSTS в settings.py используя sed
+    sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && \
+        sed -i \"s/^ALLOWED_HOSTS = .*/ALLOWED_HOSTS = $ALLOWED_HOSTS_STR/\" santagame/settings.py"
+    success "ALLOWED_HOSTS обновлен в settings.py: $ALLOWED_HOSTS_STR"
+fi
+
+# Шаг 13: Применение миграций
 echo ""
-info "Шаг 12: Применение миграций базы данных"
+info "Шаг 13: Применение миграций базы данных"
 sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && source venv/bin/activate && python manage.py migrate"
 success "Миграции применены"
 
-# Шаг 13: Создание суперпользователя (опционально)
+# Шаг 14: Создание суперпользователя (опционально)
 echo ""
 read -p "Создать суперпользователя Django для доступа к админке? (y/n) [n]: " create_superuser
 if [[ "$create_superuser" =~ ^[Yy]$ ]]; then
     sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && source venv/bin/activate && python manage.py createsuperuser"
 fi
 
-# Шаг 14: Создание systemd сервиса
+# Шаг 15: Создание systemd сервиса
 echo ""
-info "Шаг 14: Создание systemd сервиса"
+info "Шаг 15: Создание systemd сервиса"
 SERVICE_FILE="/etc/systemd/system/santa-game-bot.service"
 
 # Формируем зависимости для systemd
@@ -388,16 +410,16 @@ EOF
 systemctl daemon-reload
 success "Systemd сервис создан: $SERVICE_FILE"
 
-# Шаг 15: Настройка прав доступа
+# Шаг 16: Настройка прав доступа
 echo ""
-info "Шаг 15: Настройка прав доступа"
+info "Шаг 16: Настройка прав доступа"
 chown -R "$SYSTEM_USER:$SYSTEM_USER" "$INSTALL_DIR"
 chmod 700 "$INSTALL_DIR"
 success "Права доступа настроены"
 
-# Шаг 16: Создание сервиса Django Admin (опционально)
+# Шаг 17: Создание сервиса Django Admin (опционально)
 echo ""
-info "Шаг 16: Настройка Django Admin сервиса"
+info "Шаг 17: Настройка Django Admin сервиса"
 ADMIN_SERVICE_CREATED="no"
 read -p "Создать systemd сервис для Django Admin? (y/n) [n]: " create_admin_service
 if [[ "$create_admin_service" =~ ^[Yy]$ ]]; then
@@ -454,9 +476,9 @@ else
     ADMIN_PORT_FINAL=""
 fi
 
-# Шаг 17: Запуск сервиса бота
+# Шаг 18: Запуск сервиса бота
 echo ""
-info "Шаг 17: Запуск сервиса бота"
+info "Шаг 18: Запуск сервиса бота"
 read -p "Запустить и включить автозапуск сервиса бота? (y/n) [y]: " start_service
 if [[ "$start_service" =~ ^[Yy]$ ]] || [ -z "$start_service" ]; then
     systemctl enable santa-game-bot.service
