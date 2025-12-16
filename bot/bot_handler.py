@@ -511,6 +511,12 @@ async def my_groups(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     message += f"  📝 Используйте /send_gift для отправки подарка\n"
         message += "\n"
     
+    # Добавляем подсказку с командой /invite для активных групп
+    has_active_groups = any(g.status == 'active' for g in owned_groups + participant_groups)
+    if has_active_groups:
+        hints = get_command_hints("/invite", "/help")
+        message += hints
+    
     await update.message.reply_text(message)
 
 
