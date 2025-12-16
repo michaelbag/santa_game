@@ -156,11 +156,13 @@ class Command(BaseCommand):
         else:
             self.stdout.write(
                 self.style.WARNING(
-                    '⚠️  ВАЖНО: После отключения DEBUG убедитесь, что:\n'
-                    '  1. ALLOWED_HOSTS содержит ваш домен\n'
-                    '  2. CSRF_TRUSTED_ORIGINS настроен для вашего домена\n'
-                    '  3. SECURE_PROXY_SSL_HEADER настроен, если используете HTTPS через Nginx\n'
-                    '  4. Перезапустите сервис Django Admin'
+                    '⚠️  ВАЖНО: После отключения DEBUG выполните:\n'
+                    '  1. Соберите статические файлы: python manage.py collectstatic --noinput\n'
+                    '  2. Убедитесь, что ALLOWED_HOSTS содержит ваш домен\n'
+                    '  3. Убедитесь, что CSRF_TRUSTED_ORIGINS настроен для вашего домена\n'
+                    '  4. Убедитесь, что SECURE_PROXY_SSL_HEADER настроен, если используете HTTPS через Nginx\n'
+                    '  5. Убедитесь, что Nginx настроен для обслуживания статических файлов из /static/\n'
+                    '  6. Перезапустите сервис Django Admin: sudo systemctl restart santa-game-admin.service'
                 )
             )
 

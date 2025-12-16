@@ -346,6 +346,12 @@ exit
 
 **Важно:** 
 - DEBUG режим должен быть **отключен** (`DEBUG = False`) в продакшене для безопасности
+- После отключения DEBUG **обязательно** соберите статические файлы:
+  ```bash
+  cd /opt/santa_game
+  source venv/bin/activate
+  python manage.py collectstatic --noinput
+  ```
 - После изменения DEBUG режима перезапустите сервис Django Admin:
   ```bash
   sudo systemctl restart santa-game-admin.service
@@ -355,6 +361,7 @@ exit
   ```python
   SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
   ```
+- Убедитесь, что Nginx настроен для обслуживания статических файлов (см. раздел "Настройка Nginx")
 
 ### Обновление проекта
 
@@ -686,7 +693,41 @@ sudo journalctl -u santa-game-admin.service -f
 
 - **Порт Django Admin:** Убедитесь, что порт в `proxy_pass` совпадает с портом, на котором запущен сервис `santa-game-admin.service`
 - **SSL сертификаты:** Обновите пути к сертификатам, если используете другой источник
-- **Статические файлы:** Если используете статические файлы Django, настройте `collectstatic` и укажите правильный путь в `location /static/`
+- **Статические файлы:** Обязательно настройте обслуживание статических файлов через Nginx (см. ниже)
+
+#### Настройка статических файлов
+
+При `DEBUG=False` Django не обслуживает статические файлы автоматически. Необходимо:
+
+1. **Собрать статические файлы:**
+   ```bash
+   sudo -u santa_game bash
+   cd /opt/santa_game
+   source venv/bin/activate
+   python manage.py collectstatic --noinput
+   exit
+   ```
+
+2. **Убедитесь, что Nginx настроен для обслуживания статических файлов:**
+   В конфигурации Nginx должен быть блок:
+   ```nginx
+   location /static/ {
+       alias /opt/santa_game/staticfiles/;
+       expires 30d;
+       add_header Cache-Control "public, immutable";
+   }
+   ```
+
+3. **Проверьте права доступа:**
+   ```bash
+   sudo chown -R santa_game:santa_game /opt/santa_game/staticfiles
+   sudo chmod -R 755 /opt/santa_game/staticfiles
+   ```
+
+4. **Перезагрузите Nginx:**
+   ```bash
+   sudo systemctl reload nginx
+   ```
 
 #### Настройка Django для работы за прокси
 

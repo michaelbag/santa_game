@@ -377,6 +377,12 @@ info "Шаг 13: Применение миграций базы данных"
 sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && source venv/bin/activate && python manage.py migrate"
 success "Миграции применены"
 
+# Шаг 13.5: Сбор статических файлов
+echo ""
+info "Шаг 13.5: Сбор статических файлов"
+sudo -u "$SYSTEM_USER" bash -c "cd $INSTALL_DIR && source venv/bin/activate && python manage.py collectstatic --noinput"
+success "Статические файлы собраны"
+
 # Шаг 14: Создание суперпользователя (опционально)
 echo ""
 read -p "Создать суперпользователя Django для доступа к админке? (y/n) [n]: " create_superuser
